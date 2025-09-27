@@ -1,0 +1,39 @@
+# Real-time monitoring settings
+monitoring:
+  check_interval: 120          # 30 minutes (longer to save API quota)
+  notification_threshold: 0.5   # Lower threshold to see more alerts
+  max_keywords_per_cycle: 5     # Fewer keywords to save quota
+  
+# Google Search API settings  
+google_search:
+  max_results: 10               # Fewer results to save quota
+  time_filter: "d1"             # Keep 24 hours
+  rate_limit_delay: 2           # Longer delay to be safer
+  
+# Notification settings
+notifications:
+  min_importance_score: 0.4     # Lower to see more notifications
+  min_ai_confidence: 0.4        # Lower to see more results
+  rate_limit_minutes: 3         # Shorter for testing
+  max_notifications_per_hour: 10 # Fewer to avoid spam
+  
+# Debug settings  
+debug:
+  verbose_logging: true         # Enable for debugging
+  save_raw_data: true          # Save data for analysis
+  log_level: "DEBUG"           # More detailed logs
+
+cryptocurrencies:
+  tier_1:  # Checked every cycle (highest priority)
+    - "bitcoin news"
+    - "ethereum news"
+    - "BTC breaking"
+    
+  tier_2:  # Checked every 2 cycles
+    - "cardano news"
+    - "solana news"
+    
+market_events:
+  - "crypto regulation"
+  - "bitcoin ETF"
+  - "SEC cryptocurrency"
