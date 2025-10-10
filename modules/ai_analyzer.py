@@ -65,14 +65,19 @@ class AIAnalyzer:
         # Initialize models
         self._initialize_models()
         
-        # Analysis weights
+        # Analysis weights - more rigorous
         self.analysis_weights = {
-            'market_impact': 0.3,      # How much this affects crypto market
-            'information_novelty': 0.25, # Is this new information?
-            'source_credibility': 0.2,  # How credible is the source?
-            'sentiment_strength': 0.15, # How strong is the sentiment?
-            'urgency_level': 0.1       # How urgent/breaking is this?
+            'market_impact': 0.35,      # Market impact - most important
+            'information_novelty': 0.3, # Information novelty - very important
+            'source_credibility': 0.2,  # Source credibility
+            'sentiment_strength': 0.1,  # Sentiment strength - less important
+            'urgency_level': 0.05       # Urgency - least important
         }
+        
+        # Thresholds for really important news
+        self.critical_threshold = 0.75
+        self.high_threshold = 0.6
+        self.medium_threshold = 0.4
         
         logger.info("🧠 AI Analyzer initialized successfully")
     
@@ -136,28 +141,38 @@ class AIAnalyzer:
         logger.info("✅ Fallback models loaded")
     
     def _load_crypto_knowledge(self) -> Dict:
-        """Load crypto-specific knowledge base"""
+        """Load crypto-specific knowledge base - SOLANA FOCUSED"""
         return {
             'tier_1_cryptos': {
-                'bitcoin': {'weight': 1.0, 'keywords': ['btc', 'bitcoin', 'satoshi']},
-                'ethereum': {'weight': 0.9, 'keywords': ['eth', 'ethereum', 'vitalik', 'gas']},
+                'solana': {'weight': 1.0, 'keywords': ['sol', 'solana', 'phantom', 'solana price', 'sol price', 'solana network', 'solana labs', 'solana ecosystem']},
             },
             'tier_2_cryptos': {
-                'cardano': {'weight': 0.7, 'keywords': ['ada', 'cardano']},
-                'solana': {'weight': 0.7, 'keywords': ['sol', 'solana']},
-                'polygon': {'weight': 0.6, 'keywords': ['matic', 'polygon']},
+                'bitcoin': {'weight': 0.8, 'keywords': ['btc', 'bitcoin', 'satoshi', 'bitcoin price', 'btc price']},
+                'ethereum': {'weight': 0.8, 'keywords': ['eth', 'ethereum', 'vitalik', 'gas', 'ethereum price', 'eth price', 'eip']},
+                'cardano': {'weight': 0.6, 'keywords': ['ada', 'cardano', 'charles hoskinson']},
+                'polygon': {'weight': 0.6, 'keywords': ['matic', 'polygon', 'layer 2']},
+                'binance': {'weight': 0.6, 'keywords': ['bnb', 'binance coin', 'bsc']},
             },
             'market_events': {
-                'regulation': {'impact': 0.9, 'keywords': ['sec', 'cftc', 'regulation', 'ban', 'legal']},
-                'institutional': {'impact': 0.8, 'keywords': ['etf', 'institutional', 'tesla', 'microstrategy']},
-                'technical': {'impact': 0.6, 'keywords': ['upgrade', 'fork', 'halving', 'merge']},
-                'exchange': {'impact': 0.7, 'keywords': ['exchange', 'binance', 'coinbase', 'hack']},
+                'regulation': {'impact': 1.0, 'keywords': ['sec', 'cftc', 'regulation', 'ban', 'legal', 'lawsuit', 'fine', 'regulatory', 'government']},
+                'institutional': {'impact': 0.95, 'keywords': ['etf', 'institutional', 'tesla', 'microstrategy', 'blackrock', 'grayscale', 'approval', 'wall street']},
+                'technical': {'impact': 0.7, 'keywords': ['upgrade', 'fork', 'halving', 'merge', 'update', 'protocol', 'network']},
+                'exchange': {'impact': 0.85, 'keywords': ['exchange', 'binance', 'coinbase', 'hack', 'listing', 'delisting', 'trading']},
+                'market_manipulation': {'impact': 0.9, 'keywords': ['manipulation', 'whale', 'pump', 'dump', 'insider']},
+                'adoption': {'impact': 0.8, 'keywords': ['adoption', 'partnership', 'integration', 'mainstream', 'corporate']}
             },
             'sentiment_indicators': {
-                'very_positive': ['moon', 'bullish', 'surge', 'breakthrough', 'adoption', 'pump'],
-                'positive': ['rise', 'gain', 'growth', 'up', 'increase', 'rally'],
-                'negative': ['drop', 'fall', 'down', 'crash', 'decline', 'bear'],
-                'very_negative': ['hack', 'scam', 'ban', 'collapse', 'plunge', 'dump']
+                'very_positive': ['moon', 'bullish', 'surge', 'breakthrough', 'adoption', 'pump', 'skyrocket', 'all-time high', 'ath', 'breakout'],
+                'positive': ['rise', 'gain', 'growth', 'up', 'increase', 'rally', 'green', 'profit', 'bull', 'upward'],
+                'negative': ['drop', 'fall', 'down', 'crash', 'decline', 'bear', 'red', 'loss', 'correction', 'dip'],
+                'very_negative': ['hack', 'scam', 'ban', 'collapse', 'plunge', 'dump', 'exploit', 'rug pull', 'investigation', 'fraud']
+            },
+            'critical_keywords': {
+                'regulatory_action': ['sec action', 'lawsuit filed', 'investigation', 'enforcement', 'fine', 'penalty'],
+                'major_hack': ['exchange hacked', 'funds stolen', 'security breach', 'exploit', 'millions lost'],
+                'institutional_news': ['etf approved', 'etf rejected', 'blackrock', 'institutional adoption'],
+                'market_moving': ['halving', 'merge completed', 'major upgrade', 'partnership announcement'],
+                'solana_critical': ['solana hack', 'solana outage', 'solana exploit', 'phantom hack', 'solana validator', 'solana consensus', 'solana mainnet']
             }
         }
     
@@ -260,52 +275,96 @@ class AIAnalyzer:
     
     async def _analyze_market_impact(self, text: str) -> float:
         """Analyze potential market impact of the content"""
-        score = 0.5  # Base score
+        score = 0.2  # Lower base score - more rigorous
         text_lower = text.lower()
+        
+        # Check critical keywords - highest priority
+        for category, keywords in self.crypto_knowledge['critical_keywords'].items():
+            if any(keyword in text_lower for keyword in keywords):
+                score += 0.4  # Big boost for critical words
         
         # Check for high-impact crypto mentions
         for crypto, info in self.crypto_knowledge['tier_1_cryptos'].items():
             if any(keyword in text_lower for keyword in info['keywords']):
-                score += info['weight'] * 0.3
+                score += info['weight'] * 0.25
         
-        # Check for market events
+        # Tier 2 cryptos - smaller impact
+        for crypto, info in self.crypto_knowledge['tier_2_cryptos'].items():
+            if any(keyword in text_lower for keyword in info['keywords']):
+                score += info['weight'] * 0.15
+        
+        # Check for market events - increased weights
         for event, info in self.crypto_knowledge['market_events'].items():
             if any(keyword in text_lower for keyword in info['keywords']):
-                score += info['impact'] * 0.2
+                score += info['impact'] * 0.3
         
-        # Check for price/volume mentions
-        if re.search(r'\$\d+|\d+%|volume|price|market cap', text_lower):
-            score += 0.15
+        # Check for price/volume mentions - konkretne liczby
+        price_patterns = [
+            r'\$\d{1,3}[,.]?\d*[kmb]?',  # $50k, $1.2M, etc
+            r'\d+%',                      # percentages
+            r'\d+x',                      # multipliers
+            r'market cap.*\$\d+',         # market cap mentions
+            r'volume.*\$\d+',             # volume mentions
+        ]
         
-        # Check for institutional/regulatory keywords
-        institutional_keywords = ['sec', 'etf', 'federal reserve', 'regulation', 'ban', 'approval']
-        if any(keyword in text_lower for keyword in institutional_keywords):
-            score += 0.25
+        for pattern in price_patterns:
+            if re.search(pattern, text_lower):
+                score += 0.1
         
-        return min(1.0, score)
+        # Penalty for opinion pieces and analysis
+        opinion_indicators = ['i think', 'i believe', 'opinion', 'analysis', 'prediction', 'forecast']
+        if any(indicator in text_lower for indicator in opinion_indicators):
+            score *= 0.7  # 30% reduction
+        
+        return min(1.0, max(0.0, score))
     
     async def _analyze_information_novelty(self, text: str, title: str) -> float:
         """Analyze how novel/new the information is"""
-        score = 0.5  # Base score
+        score = 0.3  # Lower base score
+        title_lower = title.lower()
+        text_lower = text.lower()
         
-        # Check for breaking/urgent indicators
-        urgent_indicators = ['breaking', 'just in', 'urgent', 'alert', 'developing', 'first time']
-        if any(indicator in title.lower() for indicator in urgent_indicators):
-            score += 0.3
+        # Breaking/urgent indicators - bardzo wysokie znaczenie
+        urgent_indicators = ['breaking', 'just in', 'urgent', 'alert', 'developing', 'first time', 'exclusive']
+        urgent_count = sum(1 for indicator in urgent_indicators if indicator in title_lower)
+        if urgent_count > 0:
+            score += 0.4 + (urgent_count - 1) * 0.1  # Bonus za multiple indicators
         
-        # Check for new developments
-        new_indicators = ['announces', 'launches', 'introduces', 'reveals', 'confirms', 'unveils']
-        if any(indicator in text.lower() for indicator in new_indicators):
-            score += 0.2
+        # Konkretne akcje/wydarzenia - wysokie znaczenie
+        action_indicators = [
+            'announces', 'launches', 'introduces', 'reveals', 'confirms', 'unveils',
+            'files', 'submits', 'approves', 'rejects', 'implements', 'completes'
+        ]
+        action_count = sum(1 for indicator in action_indicators if indicator in text_lower)
+        if action_count > 0:
+            score += 0.25 + (action_count - 1) * 0.05
         
-        # Check for specific events/numbers (often indicates concrete news)
-        if re.search(r'\b(20\d{2}|\d{1,2}/\d{1,2}|\d+\s*(million|billion|trillion))', text):
-            score += 0.15
+        # Dates and concrete numbers - indicate actual events
+        concrete_indicators = [
+            r'\b(today|yesterday|this week|this month)',
+            r'\b20\d{2}\b',  # years
+            r'\b\d{1,2}/\d{1,2}(/\d{2,4})?\b',  # dates
+            r'\$\d+\s*(million|billion|trillion)',  # specific amounts
+            r'\d+%',  # percentages
+        ]
         
-        # Penalty for opinion/analysis pieces
-        opinion_indicators = ['opinion', 'analysis', 'think', 'believe', 'predict', 'forecast']
-        if any(indicator in text.lower() for indicator in opinion_indicators):
-            score -= 0.2
+        for pattern in concrete_indicators:
+            if re.search(pattern, text_lower):
+                score += 0.1
+        
+        # Very high penalty for opinion/analysis pieces
+        opinion_indicators = [
+            'opinion', 'analysis', 'think', 'believe', 'predict', 'forecast',
+            'could', 'might', 'may', 'possibly', 'speculation', 'rumor'
+        ]
+        opinion_count = sum(1 for indicator in opinion_indicators if indicator in text_lower)
+        if opinion_count > 0:
+            score *= 0.5  # 50% reduction for opinion pieces
+        
+        # Penalty for old news
+        old_indicators = ['last week', 'last month', 'weeks ago', 'months ago']
+        if any(indicator in text_lower for indicator in old_indicators):
+            score *= 0.6
         
         return max(0.0, min(1.0, score))
     
@@ -385,42 +444,78 @@ class AIAnalyzer:
     async def _analyze_source_credibility(self, source: str) -> float:
         """Analyze credibility of the source"""
         if not source:
-            return 0.5
+            return 0.3
         
         source_lower = source.lower()
         
-        # Tier 1 sources (highest credibility)
-        tier_1 = ['reuters.com', 'bloomberg.com', 'coindesk.com', 'wsj.com']
+        # Tier 1 sources (highest credibility) - traditional financial media
+        tier_1 = [
+            'reuters.com', 'bloomberg.com', 'wsj.com', 'ft.com', 'cnbc.com',
+            'ap.org', 'bbc.com/business', 'sec.gov', 'cftc.gov'
+        ]
         if any(domain in source_lower for domain in tier_1):
             return 1.0
         
-        # Tier 2 sources
-        tier_2 = ['cointelegraph.com', 'decrypt.co', 'theblock.co', 'cnbc.com']
+        # Tier 2 sources - specialized crypto media
+        tier_2 = [
+            'coindesk.com', 'theblock.co', 'decrypt.co', 'cointelegraph.com',
+            'blockworks.co', 'coinbase.com/blog'
+        ]
         if any(domain in source_lower for domain in tier_2):
-            return 0.8
+            return 0.85
         
-        # Tier 3 sources
-        tier_3 = ['yahoo.com', 'marketwatch.com', 'investing.com']
+        # Tier 3 sources - popular financial media
+        tier_3 = [
+            'marketwatch.com', 'investing.com', 'yahoo.com/finance',
+            'techcrunch.com', 'forbes.com'
+        ]
         if any(domain in source_lower for domain in tier_3):
-            return 0.6
+            return 0.7
         
-        # Unknown sources
-        return 0.4
+        # Tier 4 - other known media
+        tier_4 = [
+            'reddit.com', 'twitter.com', 'medium.com', 'substack.com'
+        ]
+        if any(domain in source_lower for domain in tier_4):
+            return 0.4
+        
+        # Unknown sources - very low score
+        return 0.2
     
     def _calculate_confidence(self, analysis_results: List[float]) -> float:
         """Calculate confidence in the analysis"""
-        # Higher confidence when components agree
-        std_dev = np.std(analysis_results)
-        mean_val = np.mean(analysis_results)
+        market_impact, novelty, sentiment_strength, urgency, source_cred = analysis_results
         
-        # Lower std dev = higher confidence
-        confidence = 1.0 - min(0.5, std_dev)
+        # Base confidence
+        confidence = 0.5
         
-        # Boost confidence for extreme values
-        if mean_val > 0.8 or mean_val < 0.2:
+        # Boost for high source credibility
+        if source_cred >= 0.8:
+            confidence += 0.3
+        elif source_cred >= 0.6:
+            confidence += 0.2
+        elif source_cred < 0.4:
+            confidence -= 0.2
+        
+        # Boost for consistency between components
+        high_scores = sum(1 for score in analysis_results if score >= 0.7)
+        if high_scores >= 3:
+            confidence += 0.2
+        elif high_scores >= 2:
             confidence += 0.1
         
-        return min(1.0, confidence)
+        # Boost for very high or very low values (confidence in extremes)
+        mean_val = np.mean(analysis_results)
+        if mean_val >= 0.8:
+            confidence += 0.2
+        elif mean_val <= 0.3:
+            confidence += 0.1
+        
+        # Penalty for medium values (uncertainty)
+        if 0.4 <= mean_val <= 0.6:
+            confidence -= 0.1
+        
+        return min(1.0, max(0.1, confidence))
     
     def _generate_explanation(self, results: List[float], final_score: float) -> str:
         """Generate human-readable explanation"""
@@ -428,29 +523,41 @@ class AIAnalyzer:
         
         explanations = []
         
-        if final_score > 0.8:
-            explanations.append("🔥 CRITICAL: High importance content")
-        elif final_score > 0.6:
-            explanations.append("📈 HIGH: Significant market relevance")
-        elif final_score > 0.4:
+        # More rigorous thresholds
+        if final_score >= 0.75:
+            explanations.append("🔥 CRITICAL: High market impact event")
+        elif final_score >= 0.6:
+            explanations.append("📈 HIGH: Significant for crypto market")
+        elif final_score >= 0.45:
             explanations.append("📊 MEDIUM: Moderate importance")
         else:
-            explanations.append("📉 LOW: Limited market impact")
+            explanations.append("📉 LOW: Limited impact")
         
-        if market_impact > 0.7:
-            explanations.append("Strong market impact potential")
+        # Specific explanations for high scores
+        if market_impact >= 0.8:
+            explanations.append("Very strong market impact")
+        elif market_impact >= 0.6:
+            explanations.append("Significant market impact")
         
-        if novelty > 0.7:
-            explanations.append("Contains new information")
+        if novelty >= 0.8:
+            explanations.append("New breakthrough information")
+        elif novelty >= 0.6:
+            explanations.append("Fresh information")
         
-        if urgency > 0.7:
-            explanations.append("Breaking/urgent news")
+        if urgency >= 0.7:
+            explanations.append("Urgent/breaking news")
         
-        if sentiment_strength > 0.7:
-            explanations.append("Strong sentiment indicators")
+        if source_cred >= 0.85:
+            explanations.append("Very credible source")
+        elif source_cred >= 0.7:
+            explanations.append("Credible source")
         
-        if source_cred > 0.8:
-            explanations.append("Highly credible source")
+        # Add warnings for low scores
+        if source_cred < 0.5:
+            explanations.append("⚠️ Unverified source")
+        
+        if novelty < 0.4:
+            explanations.append("📰 May be old information")
         
         return " • ".join(explanations)
     
@@ -483,35 +590,49 @@ class AIAnalyzer:
         """Fallback analysis when AI models fail"""
         logger.warning("🔄 Using fallback analysis due to AI model failure")
         
-        # Simple rule-based analysis
+        # Simple rule-based analysis - more rigorous
         text = f"{title} {content}".lower()
         
-        # Basic importance scoring
-        importance = 0.5
+        # Very conservative scoring
+        importance = 0.2
         
-        # Check for important keywords
-        important_keywords = ['bitcoin', 'ethereum', 'regulation', 'sec', 'etf', 'hack', 'crash']
-        importance += min(0.3, sum(0.1 for keyword in important_keywords if keyword in text))
+        # Check only most critical keywords
+        critical_keywords = [
+            'sec action', 'etf approved', 'etf rejected', 'hack', 'billions lost',
+            'regulation ban', 'bitcoin halving', 'ethereum merge', 'major partnership'
+        ]
         
-        # Check source
-        if any(domain in source.lower() for domain in ['reuters', 'bloomberg', 'coindesk']):
+        for keyword in critical_keywords:
+            if keyword in text:
+                importance += 0.2
+        
+        # Check source credibility
+        source_score = 0.3
+        if any(domain in source.lower() for domain in ['reuters', 'bloomberg', 'sec.gov', 'coindesk']):
+            source_score = 0.8
             importance += 0.2
+        elif any(domain in source.lower() for domain in ['cnbc', 'wsj', 'ft.com']):
+            source_score = 0.7
+            importance += 0.1
+        
+        # Very rigorous - fallback should give low scores
+        importance = min(0.6, importance)  # Max 60% for fallback
         
         return {
-            'importance_score': min(1.0, importance),
-            'confidence': 0.5,
+            'importance_score': importance,
+            'confidence': 0.3,  # Low confidence for fallback
             'components': {
-                'market_impact': 0.5,
-                'information_novelty': 0.5,
-                'sentiment_strength': 0.5,
-                'urgency_level': 0.5,
-                'source_credibility': 0.5
+                'market_impact': min(0.6, importance),
+                'information_novelty': 0.4,
+                'sentiment_strength': 0.3,
+                'urgency_level': 0.3,
+                'source_credibility': source_score
             },
-            'explanation': '⚠️ Fallback analysis - AI models unavailable',
+            'explanation': '⚠️ Fallback analysis - limited accuracy',
             'crypto_mentions': self._extract_crypto_mentions(text),
             'key_themes': [],
             'analyzed_at': datetime.now().isoformat(),
-            'model_version': 'fallback'
+            'model_version': 'fallback_conservative'
         }
 
 # Test function

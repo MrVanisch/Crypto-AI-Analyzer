@@ -1,0 +1,50 @@
+# Keywords configuration for Crypto AI Analyzer
+# SOLANA FOCUSED MONITORING
+
+cryptocurrencies:
+  tier_1:  # Highest priority - checked every cycle (SOLANA FOCUSED)
+    - "solana news"
+    - "SOL price"
+    - "solana breaking"
+    - "solana update"
+    - "solana upgrade"
+    - "solana network"
+    - "SOL token"
+    - "solana ecosystem"
+    
+  tier_2:  # High importance (Solana related)
+    - "solana partnership"
+    - "solana adoption"
+    - "solana DeFi"
+    - "solana NFT"
+    - "phantom wallet"
+    - "solana labs"
+    
+  tier_3:  # Medium importance (Solana ecosystem)
+    - "serum dex"
+    - "raydium"
+    - "orca solana"
+    - "solana beach"
+    
+market_events:
+  critical:  # Critical events (Solana focused)
+    - "solana hack"
+    - "solana outage"
+    - "solana exploit"
+    - "solana validator"
+    - "solana consensus"
+    - "phantom hack"
+    
+  high_priority:  # High importance (Solana ecosystem)
+    - "solana institutional"
+    - "solana regulation"
+    - "solana partnership"
+    - "solana upgrade"
+    - "solana mainnet"
+    
+  medium_priority:  # Medium importance (general crypto but relevant)
+    - "crypto regulation"
+    - "bitcoin ETF"
+    - "SEC cryptocurrency"
+    - "crypto ban"
+    - "blockchain adoption"

@@ -136,6 +136,7 @@ class ImportanceScorer:
             result = {
                 'keyword': keyword,
                 'importance': final_score,
+                'importance_score': final_score,  # Add both keys for compatibility
                 'confidence': confidence,
                 'components': {
                     'ai_importance': ai_score,
@@ -158,6 +159,8 @@ class ImportanceScorer:
             }
             
             logger.info(f"✅ Final score calculated: {final_score:.3f} (confidence: {confidence:.3f})")
+            logger.info(f"🔍 DEBUG: Result keys = {list(result.keys())}")
+            logger.info(f"🔍 DEBUG: importance_score = {result.get('importance_score', 'MISSING!')}")
             
             return result
             
@@ -450,6 +453,7 @@ class ImportanceScorer:
         return {
             'keyword': keyword,
             'importance': score,
+            'importance_score': score,  # Add both keys for compatibility
             'confidence': 0.4,
             'components': {
                 'ai_importance': 0.5,
