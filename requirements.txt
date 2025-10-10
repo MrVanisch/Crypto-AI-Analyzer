@@ -60,6 +60,9 @@ tqdm>=4.66.0
 newspaper3k>=0.2.8
 trafilatura>=1.6.0
 
+# Cryptocurrency APIs
+coinbase>=2.1.0
+
 # Optional GPU support (uncomment if using CUDA)
 # torch>=2.1.0+cu121 --index-url https://download.pytorch.org/whl/cu121
 

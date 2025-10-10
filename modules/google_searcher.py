@@ -1,6 +1,6 @@
 """
 Google Search API Integration for Crypto AI Analyzer
-Handles search queries and result processing
+Version 1.0 - Paid API with high quality results
 """
 
 import os
@@ -14,6 +14,28 @@ from loguru import logger
 import time
 from urllib.parse import urlparse
 import json
+
+def get_searcher_info():
+    """Get information about this searcher"""
+    return {
+        'name': 'Google Custom Search',
+        'version': '1.0',
+        'cost': 'PAID ($5 per 1000 searches after 100 free)',
+        'api_key_required': True,
+        'daily_limit': '100 searches/day (free tier)',
+        'advantages': [
+            '✅ Highest quality search results',
+            '✅ Best relevance ranking',
+            '✅ Most comprehensive coverage',
+            '✅ Precise time filtering'
+        ],
+        'disadvantages': [
+            '❌ Requires API key setup',
+            '❌ Limited free tier (100/day)',
+            '❌ Costs money after free tier',
+            '❌ More complex setup'
+        ]
+    }
 
 class GoogleSearcher:
     def __init__(self):
@@ -30,7 +52,7 @@ class GoogleSearcher:
         # Initialize Google Custom Search service
         try:
             self.service = build("customsearch", "v1", developerKey=self.api_key)
-            logger.info("✅ Google Search API initialized successfully")
+            logger.info("✅ Google Search API initialized successfully (v1.0 - PAID)")
         except Exception as e:
             logger.error(f"❌ Failed to initialize Google Search API: {e}")
             raise
@@ -80,7 +102,7 @@ class GoogleSearcher:
         if cache_key in self.cache:
             cached_result, timestamp = self.cache[cache_key]
             if time.time() - timestamp < self.cache_duration:
-                logger.debug(f"🎯 Using cached results for: {query}")
+                logger.debug(f"💾 Using cached results for: {query}")
                 return cached_result
         
         # Check daily quota
@@ -352,13 +374,34 @@ class GoogleSearcher:
         """Reset daily quota counter (call this daily)"""
         self.daily_quota_used = 0
         logger.info("🔄 Daily API quota reset")
+    
+    def get_stats(self) -> Dict:
+        """Get search statistics"""
+        quota = self.get_quota_status()
+        return {
+            'total_searches': self.daily_quota_used,
+            'cache_hits': 0,  # Not tracked in v1.0
+            'cache_hit_rate': 'N/A',
+            'cached_queries': len(self.cache),
+            'api_cost': f"💰 PAID (${(max(0, self.daily_quota_used - 100) * 0.005):.2f} today)",
+            'daily_limit': f"{quota['remaining']}/{quota['daily_limit']} remaining"
+        }
 
 # Test function
 async def test_google_searcher():
     """Test the Google searcher functionality"""
-    print("🧪 Testing Google Searcher...")
+    print("🧪 Testing Google Searcher (v1.0)...")
     
-    searcher = GoogleSearcher()
+    try:
+        searcher = GoogleSearcher()
+    except ValueError as e:
+        print(f"❌ {e}")
+        print("\n📝 To use Google Search:")
+        print("1. Create .env file with:")
+        print("   GOOGLE_API_KEY=your_api_key")
+        print("   GOOGLE_CSE_ID=your_cse_id")
+        print("2. Get API key from: https://console.cloud.google.com/")
+        return
     
     # Test single search
     results = await searcher.search("bitcoin news", max_results=5)
@@ -371,41 +414,14 @@ async def test_google_searcher():
         print(f"   Relevance: {result.get('relevance_score', 0):.2f}")
     
     # Test quota status
-    quota = searcher.get_quota_status()
-    print(f"\n📈 API Quota: {quota['daily_used']}/{quota['daily_limit']} ({quota['percentage_used']:.1f}%)")
+    stats = searcher.get_stats()
+    print(f"\n📈 Stats: {stats}")
 
 if __name__ == "__main__":
-    # Set up environment variables for testing
-    print("🔧 Setting up test credentials...")
+    import sys
+    sys.path.append(str(__file__).replace('google_searcher.py', ''))
     
-    # Check if .env file exists
-    from pathlib import Path
-    env_file = Path('.env')
-    
-    if not env_file.exists():
-        print("❌ .env file not found!")
-        print("📝 Create .env file with:")
-        print("GOOGLE_API_KEY=your_actual_api_key")
-        print("GOOGLE_CSE_ID=1697b5d0a8b924725")
-        print("\n🔗 Get API key from: https://console.cloud.google.com/")
-        exit(1)
-    
-    # Load .env file
     from dotenv import load_dotenv
     load_dotenv()
-    
-    # Check if credentials are set
-    api_key = os.getenv('GOOGLE_API_KEY')
-    cse_id = os.getenv('GOOGLE_CSE_ID')
-    
-    if not api_key or api_key == 'your_actual_api_key':
-        print("❌ GOOGLE_API_KEY not set in .env file")
-        exit(1)
-        
-    if not cse_id:
-        print("❌ GOOGLE_CSE_ID not set in .env file")
-        exit(1)
-    
-    print(f"✅ Credentials loaded: API Key: {api_key[:10]}... CSE ID: {cse_id}")
     
     asyncio.run(test_google_searcher())

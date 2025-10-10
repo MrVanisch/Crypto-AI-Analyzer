@@ -1,21 +1,32 @@
 # Real-time monitoring settings
 monitoring:
-  check_interval: 120          # 30 minutes (longer to save API quota)
-  notification_threshold: 0.5   # Lower threshold to see more alerts
-  max_keywords_per_cycle: 5     # Fewer keywords to save quota
+  check_interval: 120          # 2 minutes for faster testing
+  notification_threshold: 0.2   # Low threshold for more notifications
+  max_keywords_per_cycle: 8     # More keywords for better coverage
+  critical_threshold: 0.75      # Threshold for critical alerts
   
 # Google Search API settings  
 google_search:
-  max_results: 10               # Fewer results to save quota
+  max_results: 15               # More results for better analysis
   time_filter: "d1"             # Keep 24 hours
-  rate_limit_delay: 2           # Longer delay to be safer
+  rate_limit_delay: 1           # Faster for testing
   
-# Notification settings
+# Notification settings - MODERATE
 notifications:
-  min_importance_score: 0.4     # Lower to see more notifications
-  min_ai_confidence: 0.4        # Lower to see more results
-  rate_limit_minutes: 3         # Shorter for testing
-  max_notifications_per_hour: 10 # Fewer to avoid spam
+  min_importance_score: 0.2     # Low threshold for more notifications
+  min_ai_confidence: 0.2        # Low AI confidence threshold
+  critical_importance_score: 0.75  # Critical events (75%+)
+  rate_limit_minutes: 3         # More frequent notifications
+  max_notifications_per_hour: 12 # More notifications per hour
+  only_breaking_news: false     # Not only breaking news
+  
+# AI Quality settings - BALANCED
+ai_quality:
+  strict_filtering: false       # Less strict filtering
+  require_multiple_sources: false # Don't require multiple sources
+  min_source_credibility: 0.3   # Lower source credibility (30%+)
+  boost_regulatory_news: true   # Boost regulatory news
+  boost_institutional_news: true # Boost institutional news
   
 # Debug settings  
 debug:
@@ -23,17 +34,49 @@ debug:
   save_raw_data: true          # Save data for analysis
   log_level: "DEBUG"           # More detailed logs
 
+# TARGET CRYPTOCURRENCY: SOLANA ONLY
+target_crypto:
+  name: "solana"
+  symbol: "SOL"
+  enabled: true
+
 cryptocurrencies:
-  tier_1:  # Checked every cycle (highest priority)
-    - "bitcoin news"
-    - "ethereum news"
-    - "BTC breaking"
-    
-  tier_2:  # Checked every 2 cycles
-    - "cardano news"
+  tier_1:  # Highest priority - checked every cycle (SOLANA FOCUSED)
     - "solana news"
+    - "SOL price"
+    - "solana breaking"
+    - "solana update"
+    - "solana upgrade"
+    - "solana network"
+    - "SOL token"
+    - "solana ecosystem"
+    
+  tier_2:  # High importance (Solana related)
+    - "solana partnership"
+    - "solana adoption"
+    - "solana DeFi"
+    - "solana NFT"
+    - "phantom wallet"
+    - "solana labs"
+    
+  tier_3:  # Medium importance (Solana ecosystem)
+    - "serum dex"
+    - "raydium"
+    - "orca solana"
+    - "solana beach"
     
 market_events:
-  - "crypto regulation"
-  - "bitcoin ETF"
-  - "SEC cryptocurrency"
+  critical:  # Critical events (Solana focused)
+    - "solana hack"
+    - "solana outage"
+    - "solana exploit"
+    - "solana validator"
+    - "solana consensus"
+    - "phantom hack"
+    
+  high_priority:  # High importance (Solana ecosystem)
+    - "solana institutional"
+    - "solana regulation"
+    - "solana partnership"
+    - "solana upgrade"
+    - "solana mainnet"
